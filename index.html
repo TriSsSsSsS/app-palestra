@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GymTracker Pro</title>
+    <title>App Palestra 3</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <!-- Load runtime config which is generated during build (injects GEMINI key safely) -->
@@ -1380,6 +1380,7 @@
             background: #f7fafc;
             border-radius: 8px;
             border: 1px solid #e2e8f0;
+            cursor: pointer;
         }
 
         .scheda-selection-item:hover {
@@ -1389,6 +1390,7 @@
         .scheda-selection-item input[type="checkbox"] {
             margin-right: 12px;
             transform: scale(1.2);
+            cursor: pointer;
         }
 
         .scheda-info {
@@ -1788,20 +1790,19 @@
     <div class="app">
         <!-- HEADER -->
         <div class="header">
-            <h1>💪 GymTracker Pro</h1>
+            <h1>💪 App Palestra 3</h1>
             <div class="header-stats">
-                <span id="totalWorkouts">0 workout</span>
-                <span id="currentStreak">0 giorni</span>
+                <span id="weeklyStreak">0 settimane consecutive</span>
             </div>
         </div>
 
         <!-- NAVIGATION -->
         <div class="nav-tabs">
-            <button class="nav-tab active" data-page="workout">🏋️ Workout</button>
+            <button class="nav-tab active" data-page="workout">🏋️ Allenamento</button>
             <button class="nav-tab" data-page="Schede">⚙️ Schede</button>
             <button class="nav-tab" data-page="progress">📈 Progressi</button>
             <button class="nav-tab" data-page="history">📅 Storia</button>
-            <button class="nav-tab nav-tab-ai" data-page="ai-assistant">🤖 AI Assistant</button>
+            <button class="nav-tab nav-tab-ai" data-page="ai-assistant">🤖 AI Personal</button>
         </div>
 
         <!-- WORKOUT PAGE -->
@@ -2010,7 +2011,7 @@
                         <div class="ai-gen-progress-container">
                             <div class="ai-gen-progress-bar" id="progressBar"></div>
                         </div>
-                        <p id="progressText" style="color: #667eea; margin-top: 0.5rem; font-size: 0.9rem;">Tempo stimato: 15-25 secondi</p>
+                        <p id="progressText" style="color: #667eea; margin-top: 0.5rem; font-size: 0.9rem;">Tempo stimato: 90-120 secondi</p>
                     </div>
                     
                     <div id="result" class="ai-gen-result"></div>
@@ -2467,7 +2468,7 @@
 
         // INIZIALIZZAZIONE
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('GymTracker Pro - Versione con AI Assistant inizializzata');
+            console.log('App Palestra 3 - Versione con AI Personal inizializzata');
             
             // Migrazione dati esistenti per aggiungere ID univoci
             migrateWorkoutHistory();
@@ -2776,10 +2777,10 @@
             function simulateProgress() {
                 let progress = 0;
                 const interval = setInterval(() => {
-                    progress += Math.random() * 15;
+                    progress += Math.random() * 7;  // Rallentato da 15 a 7
                     if (progress > 90) progress = 90;
                     progressBar.style.width = progress + '%';
-                }, 1000);
+                }, 2000);  // Rallentato da 1000ms a 2000ms
                 return interval;
             }
 
@@ -2995,8 +2996,9 @@ Rispondi SOLO con JSON valido, senza testo extra.
                     if (workout.workout_days && workout.workout_days.length > 0) {
                         workout.workout_days.forEach((day, index) => {
                             const dayId = schedeId + '_day' + index;
+                            // Accorcia il nome della scheda (es: "Giorno 1" invece del titolo completo)
                             customSchede[dayId] = {
-                                name: `${workout.title} - ${day.day}`,
+                                name: day.day || `Giorno ${index + 1}`,
                                 exercises: day.exercises.map(ex => ({
                                     name: ex.name,
                                     sets: parseInt(ex.sets) || 3,
@@ -3008,7 +3010,7 @@ Rispondi SOLO con JSON valido, senza testo extra.
                     } else {
                         // Fallback: se non ci sono workout_days, prova a salvare come singola scheda
                         customSchede[schedeId] = {
-                            name: workout.title || 'Scheda AI',
+                            name: 'Scheda AI',
                             exercises: workout.exercises || []
                         };
                     }
@@ -3958,8 +3960,8 @@ Rispondi SOLO con JSON valido, senza testo extra.
                     <div class="exercise-card">
                         <div class="exercise-header">
                             <div class="exercise-name">${exercise.name}</div>
-                            <button class="control-btn video-btn" title="Video YouTube" onclick="openExerciseVideo(${index})">🎥</button>
                             <div class="exercise-controls">
+                                <button class="control-btn video-btn" title="Video YouTube" onclick="openExerciseVideo(${index})">🎥</button>
                                 <button class="${notesToggleClasses}" title="${notesToggleTitle}" onclick="toggleNotes(${index})">${notesToggleIcon}</button>
                                 <button class="control-btn" title="Sposta su" onclick="moveExercise(${index}, -1)">↑</button>
                                 <button class="control-btn" title="Sposta giù" onclick="moveExercise(${index}, 1)">↓</button>
@@ -4404,10 +4406,13 @@ Rispondi SOLO con JSON valido, senza testo extra.
         }
 
         function removeSchedaExercise(SchedaId, index) {
-            customSchede[SchedaId].exercises.splice(index, 1);
-            saveSchede();
-            renderSchedaButtons();
-            renderSchedaEditors();
+            const exerciseName = customSchede[SchedaId].exercises[index].name;
+            if (confirm(`Sei sicuro di voler eliminare l'esercizio "${exerciseName}"?`)) {
+                customSchede[SchedaId].exercises.splice(index, 1);
+                saveSchede();
+                renderSchedaButtons();
+                renderSchedaEditors();
+            }
         }
 
         function saveSchede() {
@@ -5373,43 +5378,57 @@ Rispondi SOLO con JSON valido, senza testo extra.
 
         // STATS FUNCTIONS
         function updateStats() {
-            const totalWorkouts = workoutHistory.length;
-            document.getElementById('totalWorkouts').textContent = `${totalWorkouts} workout${totalWorkouts !== 1 ? 's' : ''}`;
-            
-            calculateStreak();
+            calculateWeeklyStreak();
         }
 
-        function calculateStreak() {
+        function calculateWeeklyStreak() {
             if (workoutHistory.length === 0) {
-                document.getElementById('currentStreak').textContent = '0 giorni';
+                document.getElementById('weeklyStreak').textContent = '0 settimane consecutive';
                 return;
             }
 
             const today = new Date();
-            today.setHours(0, 0, 0, 0); // Normalizza a mezzanotte locale
+            today.setHours(0, 0, 0, 0);
 
-            const datesSet = new Set(workoutHistory.map(w => w.date));
-            
+            // Funzione per ottenere il numero della settimana (ISO week)
+            function getWeekNumber(date) {
+                const d = new Date(date);
+                d.setHours(0, 0, 0, 0);
+                d.setDate(d.getDate() + 4 - (d.getDay() || 7));
+                const yearStart = new Date(d.getFullYear(), 0, 1);
+                const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+                return d.getFullYear() + '-W' + weekNo;
+            }
+
+            // Raggruppa allenamenti per settimana
+            const weeksSet = new Set();
+            workoutHistory.forEach(workout => {
+                const workoutDate = new Date(workout.date);
+                weeksSet.add(getWeekNumber(workoutDate));
+            });
+
+            // Calcola streak di settimane consecutive
             let streak = 0;
             let checkDate = new Date(today);
             
-            // Se oggi non c'è allenamento, inizia da ieri
-            const todayISO = checkDate.toISOString().split('T')[0];
-            if (!datesSet.has(todayISO)) {
-                checkDate.setDate(checkDate.getDate() - 1);
-            }
-
             while (true) {
-                const iso = checkDate.toISOString().split('T')[0];
-                if (datesSet.has(iso)) {
+                const weekNum = getWeekNumber(checkDate);
+                if (weeksSet.has(weekNum)) {
                     streak++;
-                    checkDate.setDate(checkDate.getDate() - 1);
+                    // Vai alla settimana precedente
+                    checkDate.setDate(checkDate.getDate() - 7);
                 } else {
+                    // Se siamo nella settimana corrente e non ci sono allenamenti, prova la settimana precedente
+                    if (streak === 0 && getWeekNumber(today) === weekNum) {
+                        checkDate.setDate(checkDate.getDate() - 7);
+                        continue;
+                    }
                     break;
                 }
             }
 
-            document.getElementById('currentStreak').textContent = `${streak} giorni`;
+            const text = streak === 1 ? '1 settimana consecutiva' : `${streak} settimane consecutive`;
+            document.getElementById('weeklyStreak').textContent = text;
         }
 
         function renderHistory() {
@@ -5652,7 +5671,7 @@ Rispondi SOLO con JSON valido, senza testo extra.
             doc.setFontSize(28);
             doc.setTextColor(255, 255, 255); // Bianco
             doc.setFont('helvetica', 'bold');
-            doc.text('GYMTRACKER PRO', 20, 20);
+            doc.text('APP PALESTRA 3', 20, 20);
 
             doc.setFontSize(14);
             doc.setFont('helvetica', 'normal');
@@ -5682,7 +5701,7 @@ Rispondi SOLO con JSON valido, senza testo extra.
                     doc.setFontSize(18);
                     doc.setTextColor(255, 255, 255);
                     doc.setFont('helvetica', 'bold');
-                    doc.text('GYMTRACKER PRO - Continuazione', 20, 20);
+                    doc.text('APP PALESTRA 3 - Continuazione', 20, 20);
                     y = 50;
                 }
 
@@ -5742,10 +5761,10 @@ Rispondi SOLO con JSON valido, senza testo extra.
                 doc.setFontSize(8);
                 doc.setTextColor(128, 128, 128);
                 doc.setFont('helvetica', 'italic');
-                doc.text(`GymTracker Pro - Pagina ${i} di ${pageCount}`, 20, 285);
+                doc.text(`App Palestra 3 - Pagina ${i} di ${pageCount}`, 20, 285);
             }
 
-            doc.save('le_mie_schede_gymtracker.pdf');
+            doc.save('le_mie_schede_palestra.pdf');
         }
 
         // CANCELLA TUTTE LE SCHEDE
@@ -5764,8 +5783,8 @@ Rispondi SOLO con JSON valido, senza testo extra.
                     const exerciseCount = scheda.exercises ? scheda.exercises.length : 0;
                     
                     container.innerHTML += `
-                        <div class="scheda-selection-item">
-                            <input type="checkbox" value="${key}" data-type="normal">
+                        <div class="scheda-selection-item" onclick="toggleSchedaCheckbox('${key}')">
+                            <input type="checkbox" id="checkbox-${key}" value="${key}" data-type="normal" onclick="event.stopPropagation()">
                             <div class="scheda-info">
                                 <div class="scheda-name">${scheda.name}</div>
                                 <div class="scheda-details">${exerciseCount} esercizi</div>
@@ -5783,8 +5802,8 @@ Rispondi SOLO con JSON valido, senza testo extra.
                     const exerciseCount = scheda.exercises ? scheda.exercises.length : 0;
                     
                     container.innerHTML += `
-                        <div class="scheda-selection-item">
-                            <input type="checkbox" value="${key}" data-type="protected">
+                        <div class="scheda-selection-item" onclick="toggleSchedaCheckbox('${key}')">
+                            <input type="checkbox" id="checkbox-${key}" value="${key}" data-type="protected" onclick="event.stopPropagation()">
                             <div class="scheda-info">
                                 <div class="scheda-name">${scheda.name} (Protetta)</div>
                                 <div class="scheda-details">${exerciseCount} esercizi</div>
@@ -5799,8 +5818,8 @@ Rispondi SOLO con JSON valido, senza testo extra.
                 const exerciseCount = scheda.exercises ? scheda.exercises.length : 0;
                 
                 container.innerHTML += `
-                    <div class="scheda-selection-item">
-                        <input type="checkbox" value="${key}" data-type="unlocked">
+                    <div class="scheda-selection-item" onclick="toggleSchedaCheckbox('${key}')">
+                        <input type="checkbox" id="checkbox-${key}" value="${key}" data-type="unlocked" onclick="event.stopPropagation()">
                         <div class="scheda-info">
                             <div class="scheda-name">${scheda.name} (Sbloccata)</div>
                             <div class="scheda-details">${exerciseCount} esercizi</div>
@@ -5810,6 +5829,13 @@ Rispondi SOLO con JSON valido, senza testo extra.
             });
 
             document.getElementById('deleteSchedeModal').classList.add('show');
+        }
+
+        function toggleSchedaCheckbox(key) {
+            const checkbox = document.getElementById('checkbox-' + key);
+            if (checkbox) {
+                checkbox.checked = !checkbox.checked;
+            }
         }
 
         function confirmDeleteSelectedSchede() {
