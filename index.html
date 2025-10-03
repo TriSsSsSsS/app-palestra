@@ -2966,17 +2966,69 @@ Rispondi SOLO con JSON valido, senza testo extra.
                     `;
                 }
                 
-                html += `<button class="ai-gen-copy-btn" onclick="copyWorkoutJSON()">📋 Copia JSON</button>`;
+                html += `<button class="ai-gen-copy-btn" onclick="addWorkoutToSchede()">➕ Aggiungi a SCHEDE</button>`;
                 
                 result.innerHTML = html;
                 result.classList.add('show');
                 window.currentWorkout = workout;
             }
 
-            window.copyWorkoutJSON = function() {
-                navigator.clipboard.writeText(JSON.stringify(window.currentWorkout, null, 2))
-                    .then(() => alert('✅ JSON copiato negli appunti!'))
-                    .catch(() => alert('❌ Errore nella copia'));
+            window.addWorkoutToSchede = function() {
+                if (!window.currentWorkout) {
+                    alert('❌ Nessuna scheda da salvare');
+                    return;
+                }
+
+                try {
+                    const workout = window.currentWorkout;
+                    
+                    // Chiedi conferma all'utente
+                    const confirmMsg = `Vuoi aggiungere "${workout.title}" alle tue schede?`;
+                    if (!confirm(confirmMsg)) return;
+                    
+                    // Carica schede esistenti
+                    let customSchede = JSON.parse(localStorage.getItem('customSchede') || '{}');
+                    
+                    // Crea un ID univoco per la nuova scheda
+                    const schedeId = 'ai_' + Date.now();
+                    
+                    // Converti il formato workout in formato scheda
+                    // Se ci sono più giorni, crea una scheda per ogni giorno
+                    if (workout.workout_days && workout.workout_days.length > 0) {
+                        workout.workout_days.forEach((day, index) => {
+                            const dayId = schedeId + '_day' + index;
+                            customSchede[dayId] = {
+                                name: `${workout.title} - ${day.day}`,
+                                exercises: day.exercises.map(ex => ({
+                                    name: ex.name,
+                                    sets: parseInt(ex.sets) || 3,
+                                    reps: parseInt(ex.reps) || 10,
+                                    weight: 0  // L'utente inserirà il peso durante l'allenamento
+                                }))
+                            };
+                        });
+                    } else {
+                        // Fallback: se non ci sono workout_days, prova a salvare come singola scheda
+                        customSchede[schedeId] = {
+                            name: workout.title || 'Scheda AI',
+                            exercises: workout.exercises || []
+                        };
+                    }
+                    
+                    // Salva le schede aggiornate
+                    localStorage.setItem('customSchede', JSON.stringify(customSchede));
+                    
+                    // Ricarica le schede nella UI
+                    renderSchedaButtons();
+                    
+                    // Notifica successo
+                    const numSchede = workout.workout_days ? workout.workout_days.length : 1;
+                    alert(`✅ ${numSchede} scheda/e aggiunta/e con successo!\n\nPuoi trovarle nella sezione "⚙️ Schede"`);
+                    
+                } catch (error) {
+                    console.error('Errore nel salvataggio della scheda:', error);
+                    alert('❌ Errore nel salvataggio della scheda');
+                }
             };
         }
 
