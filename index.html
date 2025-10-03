@@ -3016,8 +3016,9 @@ Rispondi SOLO con JSON valido, senza testo extra.
                     // Salva le schede aggiornate nel localStorage
                     localStorage.setItem('customSchede', JSON.stringify(customSchede));
                     
-                    // Ricarica le schede nella UI
-                    renderSchedaButtons();
+                    // Ricarica le schede in entrambe le UI
+                    renderSchedaButtons();   // Per la pagina "Allenamento"
+                    renderSchedaEditors();   // Per la pagina "Schede"
                     
                     // Notifica successo
                     const numSchede = workout.workout_days ? workout.workout_days.length : 1;
