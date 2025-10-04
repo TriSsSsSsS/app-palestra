@@ -419,15 +419,15 @@
         .toggle-filters-btn {
             background: white;
             border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 10px 15px;
-            width: 100%;
+            border-radius: 6px;
+            padding: 6px 12px;
             cursor: pointer;
             font-weight: 500;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: #4a5568;
             transition: all 0.3s ease;
             text-align: left;
+            display: inline-block;
         }
 
         .toggle-filters-btn:hover {
@@ -1249,22 +1249,24 @@
             height: 100%;
             background: rgba(0,0,0,0.5);
             z-index: 1000;
-        }
-
-        .modal.show {
-            display: flex;
             align-items: center;
             justify-content: center;
         }
 
+        .modal.show {
+            display: flex;
+        }
+
         .modal-content {
             background: white;
-            padding: 25px;
-            border-radius: 15px;
-            width: 90%;
+            padding: 2rem;
+            border-radius: 12px;
             max-width: 500px;
+            width: 90%;
             max-height: 80vh;
             overflow-y: auto;
+            position: relative;
+            z-index: 1001;
         }
 
         .modal-title {
@@ -1662,6 +1664,36 @@
             font-weight: 600;
         }
 
+        /* BACK TO TOP BUTTON */
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            cursor: pointer;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            z-index: 1000;
+        }
+
+        .back-to-top.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .back-to-top:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.6);
+        }
+
         /* AI WORKOUT GENERATOR STYLES */
         .ai-workout-generator {
             max-width: 1000px;
@@ -1891,7 +1923,7 @@
         <div class="header">
             <h1>💪 App Palestra 3</h1>
             <div class="header-stats">
-                <span id="weeklyStreak">0 settimane consecutive</span>
+                <span id="weeklyStreak">🔥 0 settimane consecutive</span>
             </div>
         </div>
 
@@ -1915,7 +1947,10 @@
                 <!-- I Scheda verranno inseriti qui -->
             </div>
 
-            <button class="add-exercise-btn" id="addExerciseBtn">➕ Aggiungi Esercizio</button>
+            <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+                <button class="add-exercise-btn" id="addExerciseBtn">➕ Aggiungi Esercizio</button>
+                <button class="add-exercise-btn" id="reorderExercisesBtn" onclick="showReorderModal()" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); display: none;">☰ Ordina Esercizi</button>
+            </div>
 
             <div id="exercisesList">
                 <!-- Gli esercizi verranno inseriti qui -->
@@ -2319,6 +2354,9 @@
         </div>
     </div>
 
+    <!-- BACK TO TOP BUTTON -->
+    <button class="back-to-top" id="backToTop" onclick="scrollToTop()">↑</button>
+
     <script>
         // VARIABILI GLOBALI
         let currentExercises = [];
@@ -2636,6 +2674,37 @@
             const sampleWorkouts = [
                 {
                     id: 'sample_1_' + Date.now(),
+                    date: '2025-08-15', // Agosto 2025
+                    name: 'Allenamento Gambe - Agosto',
+                    schedaName: '🦵 Scheda Gambe',
+                    exercises: [
+                        { name: 'Squat', sets: 4, reps: 10, weight: 60, completed: true },
+                        { name: 'Leg Press', sets: 3, reps: 12, weight: 120, completed: true },
+                        { name: 'Leg Curl', sets: 3, reps: 12, weight: 40, completed: true },
+                        { name: 'Leg Extension', sets: 3, reps: 12, weight: 50, completed: true },
+                        { name: 'Calf Raises', sets: 4, reps: 15, weight: 60, completed: true }
+                    ],
+                    duration: 50,
+                    notes: 'Allenamento intenso agosto!',
+                    isSample: true
+                },
+                {
+                    id: 'sample_2_' + Date.now(),
+                    date: '2025-08-22', // Agosto 2025
+                    name: 'Allenamento Petto - Agosto',
+                    schedaName: '💪 Scheda Petto',
+                    exercises: [
+                        { name: 'Panca Piana', sets: 4, reps: 8, weight: 70, completed: true },
+                        { name: 'Panca Inclinata', sets: 3, reps: 10, weight: 60, completed: true },
+                        { name: 'Croci con Manubri', sets: 3, reps: 12, weight: 20, completed: true },
+                        { name: 'Dips', sets: 3, reps: 10, weight: 0, completed: true }
+                    ],
+                    duration: 45,
+                    notes: 'Agosto - focus petto!',
+                    isSample: true
+                },
+                {
+                    id: 'sample_3_' + Date.now(),
                     date: new Date(today.getTime() - 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 6 giorni fa (Lunedì)
                     name: 'Allenamento Full Body - Esempio',
                     schedaName: '🏋️ Full Body Principiante - Livello 1',
@@ -2651,7 +2720,7 @@
                     isSample: true
                 },
                 {
-                    id: 'sample_2_' + Date.now(),
+                    id: 'sample_4_' + Date.now(),
                     date: new Date(today.getTime() - 4 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 4 giorni fa (Mercoledì)
                     name: 'Allenamento Full Body - Esempio 2',
                     schedaName: '💪 Full Body Principiante - Livello 2',
@@ -2667,7 +2736,7 @@
                     isSample: true
                 },
                 {
-                    id: 'sample_3_' + Date.now(),
+                    id: 'sample_5_' + Date.now(),
                     date: new Date(today.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 2 giorni fa (Venerdì)
                     name: 'Allenamento Full Body - Esempio 3',
                     schedaName: '🏋️ Full Body Principiante - Livello 1',
@@ -2683,7 +2752,7 @@
                     isSample: true
                 },
                 {
-                    id: 'sample_4_' + Date.now(),
+                    id: 'sample_6_' + Date.now(),
                     date: new Date(today.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Ieri (Sabato)
                     name: 'Allenamento Full Body - Esempio 4',
                     schedaName: '💪 Full Body Principiante - Livello 2',
@@ -3898,8 +3967,8 @@ Rispondi SOLO con JSON valido, senza testo extra.
                     isCardio: true,
                     time: time,
                     distance: distance,
-                    notes: '',
-                    notesCollapsed: true
+                    notes: lastData?.notes || '',
+                    notesCollapsed: !(lastData?.notes)
                 };
             } else {
                 // Esercizio tradizionale: sets, reps, weight
@@ -3914,8 +3983,8 @@ Rispondi SOLO con JSON valido, senza testo extra.
                     sets: sets,
                     reps: reps,
                     weight: weight,
-                    notes: '',
-                    notesCollapsed: true
+                    notes: lastData?.notes || '',
+                    notesCollapsed: !(lastData?.notes)
                 };
             }
 
@@ -4070,6 +4139,7 @@ Rispondi SOLO con JSON valido, senza testo extra.
                     </div>
                 `;
                 document.getElementById('saveWorkoutBtn').style.display = 'none';
+                document.getElementById('reorderExercisesBtn').style.display = 'none';
                 return;
             }
 
@@ -4109,7 +4179,6 @@ Rispondi SOLO con JSON valido, senza testo extra.
                             <div class="exercise-controls">
                                 <button class="control-btn video-btn" title="Video YouTube" onclick="openExerciseVideo(${index})">🎥</button>
                                 <button class="${notesToggleClasses}" title="${notesToggleTitle}" onclick="toggleNotes(${index})">${notesToggleIcon}</button>
-                                <button class="control-btn" title="Ordina esercizi" onclick="showReorderModal()">↕️</button>
                                 <button class="control-btn delete" title="Rimuovi" onclick="removeExercise(${index})">🗑️</button>
                             </div>
                         </div>
@@ -4160,6 +4229,7 @@ Rispondi SOLO con JSON valido, senza testo extra.
             }).join('');
 
             document.getElementById('saveWorkoutBtn').style.display = 'block';
+            document.getElementById('reorderExercisesBtn').style.display = currentExercises.length > 1 ? 'inline-block' : 'none';
         }
 
         function updateExercise(index, field, value) {
@@ -5679,8 +5749,25 @@ Rispondi SOLO con JSON valido, senza testo extra.
                 }
             }
 
-            const text = streak === 1 ? '1 settimana consecutiva' : `${streak} settimane consecutive`;
+            const text = streak === 1 ? '🔥 1 settimana consecutiva' : `🔥 ${streak} settimane consecutive`;
             document.getElementById('weeklyStreak').textContent = text;
+        }
+
+        // BACK TO TOP BUTTON
+        window.addEventListener('scroll', function() {
+            const backToTop = document.getElementById('backToTop');
+            if (window.pageYOffset > 300) {
+                backToTop.classList.add('show');
+            } else {
+                backToTop.classList.remove('show');
+            }
+        });
+
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
         }
 
         function renderHistory() {
