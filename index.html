@@ -374,6 +374,72 @@
             gap: 20px;
         }
 
+        /* MUSCLE GROUPS FILTER */
+        .muscle-groups-filter {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .muscle-group-btns {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .muscle-group-btn {
+            padding: 10px 20px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            color: #4a5568;
+        }
+
+        .muscle-group-btn:hover {
+            border-color: #4a5568;
+            background: #f7fafc;
+        }
+
+        .muscle-group-btn.active {
+            background: #4a5568;
+            color: white;
+            border-color: #4a5568;
+        }
+
+        /* ADDITIONAL FILTERS */
+        .additional-filters-section {
+            margin-bottom: 20px;
+        }
+
+        .toggle-filters-btn {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 15px 20px;
+            width: 100%;
+            cursor: pointer;
+            font-weight: 600;
+            color: #4a5568;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .toggle-filters-btn:hover {
+            background: #f7fafc;
+            border-color: #4a5568;
+        }
+
+        .additional-filters-content {
+            margin-top: 10px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
         .filter-group {
             display: flex;
             flex-direction: column;
@@ -1257,6 +1323,38 @@
             background: #cbd5e0;
         }
 
+        /* REORDER LIST */
+        .reorder-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #f7fafc;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            cursor: grab;
+        }
+
+        .reorder-item:active {
+            cursor: grabbing;
+        }
+
+        .reorder-item.dragging {
+            opacity: 0.5;
+        }
+
+        .reorder-handle {
+            font-size: 1.2em;
+            color: #718096;
+        }
+
+        .reorder-item-name {
+            flex: 1;
+            font-weight: 500;
+            color: #2d3748;
+        }
+
         /* MUSCLE SELECTION MODAL */
         .modal-description {
             color: #718096;
@@ -1838,30 +1936,45 @@
 
         <!-- PROGRESS PAGE -->
         <div id="progressPage" class="page">
-            <!-- TIME FILTERS -->
-            <div class="progress-filters">
-                <div class="filter-group">
-                    <label class="filter-label">Periodo:</label>
-                    <select id="timeFilter" class="filter-select">
-                        <option value="all">Tutto il tempo</option>
-                        <option value="30">Ultimi 30 giorni</option>
-                        <option value="90">Ultimi 3 mesi</option>
-                        <option value="180">Ultimi 6 mesi</option>
-                        <option value="365">Ultimo anno</option>
-                        <option value="custom">Personalizzato</option>
-                    </select>
+            <!-- MUSCLE GROUP FILTERS (Primary) -->
+            <div class="muscle-groups-filter">
+                <h3 style="margin-bottom: 15px; color: #2d3748;">💪 Gruppi Muscolari</h3>
+                <div id="muscleGroupButtons" class="muscle-group-btns">
+                    <!-- Pulsanti gruppi muscolari generati qui -->
                 </div>
-                <div class="filter-group custom-date-group" id="customDateGroup" style="display: none;">
-                    <label class="filter-label">Da:</label>
-                    <input type="date" id="startDate" class="filter-select">
-                    <label class="filter-label" style="margin-left: 10px;">A:</label>
-                    <input type="date" id="endDate" class="filter-select">
-                </div>
-                <div class="filter-group">
-                    <label class="filter-label">Esercizio:</label>
-                    <select id="exerciseFilter" class="filter-select">
-                        <option value="">Tutti gli esercizi</option>
-                    </select>
+            </div>
+
+            <!-- ADDITIONAL FILTERS (Collapsible) -->
+            <div class="additional-filters-section">
+                <button id="toggleAdditionalFilters" class="toggle-filters-btn">
+                    🔽 Filtri Aggiuntivi
+                </button>
+                <div id="additionalFiltersContent" class="additional-filters-content" style="display: none;">
+                    <div class="progress-filters">
+                        <div class="filter-group">
+                            <label class="filter-label">Periodo:</label>
+                            <select id="timeFilter" class="filter-select">
+                                <option value="all">Tutto il tempo</option>
+                                <option value="30">Ultimi 30 giorni</option>
+                                <option value="90">Ultimi 3 mesi</option>
+                                <option value="180">Ultimi 6 mesi</option>
+                                <option value="365">Ultimo anno</option>
+                                <option value="custom">Personalizzato</option>
+                            </select>
+                        </div>
+                        <div class="filter-group custom-date-group" id="customDateGroup" style="display: none;">
+                            <label class="filter-label">Da:</label>
+                            <input type="date" id="startDate" class="filter-select">
+                            <label class="filter-label" style="margin-left: 10px;">A:</label>
+                            <input type="date" id="endDate" class="filter-select">
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">Esercizio Specifico:</label>
+                            <select id="exerciseFilter" class="filter-select">
+                                <option value="">Tutti gli esercizi</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -1873,21 +1986,21 @@
                         <canvas id="weightChart"></canvas>
                     </div>
                 </div>
+            </div>
+
+            <!-- EXERCISE LIST -->
+            <div id="progressList">
+                <!-- I progressi verranno inseriti qui -->
+            </div>
+
+            <!-- VOLUME CHART (At the end) -->
+            <div class="progress-charts">
                 <div class="chart-container">
                     <h3 class="chart-title">📊 Volume di Allenamento</h3>
                     <div class="chart-canvas">
                         <canvas id="volumeChart"></canvas>
                     </div>
                 </div>
-            </div>
-
-            <!-- MUSCOLI ALLENATI -->
-            <div id="musclesWorkedContainer" class="muscles-worked-section">
-                <!-- I muscoli verranno mostrati qui -->
-            </div>
-
-            <div id="progressList">
-                <!-- I progressi verranno inseriti qui -->
             </div>
         </div>
 
@@ -2077,6 +2190,19 @@
             </div>
         </div>
 
+        <div id="reorderModal" class="modal">
+            <div class="modal-content">
+                <h3 class="modal-title">↕️ Ordina Esercizi</h3>
+                <div id="reorderList" style="max-height: 400px; overflow-y: auto;">
+                    <!-- Lista esercizi da riordinare -->
+                </div>
+                <div class="modal-buttons">
+                    <button class="modal-btn primary" id="confirmReorder">Conferma</button>
+                    <button class="modal-btn secondary" id="cancelReorder">Annulla</button>
+                </div>
+            </div>
+        </div>
+
         <div id="muscleSelectionModal" class="modal">
             <div class="modal-content">
                 <h3 class="modal-title">🏋️‍♂️ Configura Nuovo Esercizio</h3>
@@ -2206,6 +2332,7 @@
         let weightChart = null;
         let volumeChart = null;
         let currentSchedaName = null;
+        let selectedMuscleGroup = null; // Per il filtro muscolare nella pagina progressi
         
         // Sistema codici per schede protette
     let unlockedCodes = JSON.parse(localStorage.getItem('unlockedCodes') || '[]');
@@ -2657,6 +2784,12 @@
             document.getElementById('confirmSaveWorkout').addEventListener('click', confirmSaveWorkout);
             document.getElementById('cancelSaveWorkout').addEventListener('click', hideModal);
             
+            // Reorder modal
+            document.getElementById('confirmReorder').addEventListener('click', confirmReorder);
+            document.getElementById('cancelReorder').addEventListener('click', () => {
+                document.getElementById('reorderModal').classList.remove('show');
+            });
+            
             // Muscle selection modal
             document.getElementById('confirmMuscleSelection').addEventListener('click', confirmMuscleSelection);
             document.getElementById('cancelMuscleSelection').addEventListener('click', cancelMuscleSelection);
@@ -2710,6 +2843,14 @@
             document.getElementById('startDate').addEventListener('change', updateProgressCharts);
             document.getElementById('endDate').addEventListener('change', updateProgressCharts);
             document.getElementById('exerciseFilter').addEventListener('change', updateProgressCharts);
+
+            // Toggle additional filters
+            document.getElementById('toggleAdditionalFilters').addEventListener('click', function() {
+                const content = document.getElementById('additionalFiltersContent');
+                const isVisible = content.style.display !== 'none';
+                content.style.display = isVisible ? 'none' : 'block';
+                this.textContent = isVisible ? '🔽 Filtri Aggiuntivi' : '🔼 Nascondi Filtri';
+            });
 
             // Close modal when clicking outside
             document.querySelectorAll('.modal').forEach(modal => {
@@ -3003,7 +3144,8 @@ Rispondi SOLO con JSON valido, senza testo extra.
                                     name: ex.name,
                                     sets: parseInt(ex.sets) || 3,
                                     reps: parseInt(ex.reps) || 10,
-                                    weight: 0  // L'utente inserirà il peso durante l'allenamento
+                                    weight: 0,  // L'utente inserirà il peso durante l'allenamento
+                                    notes: ex.notes || ''  // Salva le note dell'AI
                                 }))
                             };
                         });
@@ -3011,7 +3153,10 @@ Rispondi SOLO con JSON valido, senza testo extra.
                         // Fallback: se non ci sono workout_days, prova a salvare come singola scheda
                         customSchede[schedeId] = {
                             name: 'Scheda AI',
-                            exercises: workout.exercises || []
+                            exercises: (workout.exercises || []).map(ex => ({
+                                ...ex,
+                                notes: ex.notes || ''
+                            }))
                         };
                     }
                     
@@ -3021,10 +3166,6 @@ Rispondi SOLO con JSON valido, senza testo extra.
                     // Ricarica le schede in entrambe le UI
                     renderSchedaButtons();   // Per la pagina "Allenamento"
                     renderSchedaEditors();   // Per la pagina "Schede"
-                    
-                    // Notifica successo
-                    const numSchede = workout.workout_days ? workout.workout_days.length : 1;
-                    alert(`✅ ${numSchede} scheda/e aggiunta/e con successo!\n\nPuoi trovarle nella sezione "⚙️ Schede"`);
                     
                 } catch (error) {
                     console.error('Errore nel salvataggio della scheda:', error);
@@ -3963,9 +4104,7 @@ Rispondi SOLO con JSON valido, senza testo extra.
                             <div class="exercise-controls">
                                 <button class="control-btn video-btn" title="Video YouTube" onclick="openExerciseVideo(${index})">🎥</button>
                                 <button class="${notesToggleClasses}" title="${notesToggleTitle}" onclick="toggleNotes(${index})">${notesToggleIcon}</button>
-                                <button class="control-btn" title="Sposta su" onclick="moveExercise(${index}, -1)">↑</button>
-                                <button class="control-btn" title="Sposta giù" onclick="moveExercise(${index}, 1)">↓</button>
-                                <button class="control-btn" title="Duplica" onclick="duplicateExercise(${index})">📋</button>
+                                <button class="control-btn" title="Ordina esercizi" onclick="showReorderModal()">↕️</button>
                                 <button class="control-btn delete" title="Rimuovi" onclick="removeExercise(${index})">🗑️</button>
                             </div>
                         </div>
@@ -4049,6 +4188,75 @@ Rispondi SOLO con JSON valido, senza testo extra.
             exercise.notesCollapsed = true;
             currentExercises.splice(index + 1, 0, exercise);
             renderExercises();
+        }
+
+        function showReorderModal() {
+            const modal = document.getElementById('reorderModal');
+            const list = document.getElementById('reorderList');
+            
+            list.innerHTML = currentExercises.map((ex, index) => `
+                <div class="reorder-item" draggable="true" data-index="${index}">
+                    <span class="reorder-handle">☰</span>
+                    <span class="reorder-item-name">${ex.name}</span>
+                </div>
+            `).join('');
+            
+            // Add drag and drop functionality
+            const items = list.querySelectorAll('.reorder-item');
+            let draggedItem = null;
+            
+            items.forEach(item => {
+                item.addEventListener('dragstart', function() {
+                    draggedItem = this;
+                    this.classList.add('dragging');
+                });
+                
+                item.addEventListener('dragend', function() {
+                    this.classList.remove('dragging');
+                });
+                
+                item.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    const afterElement = getDragAfterElement(list, e.clientY);
+                    if (afterElement == null) {
+                        list.appendChild(draggedItem);
+                    } else {
+                        list.insertBefore(draggedItem, afterElement);
+                    }
+                });
+            });
+            
+            modal.classList.add('show');
+        }
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.reorder-item:not(.dragging)')];
+            
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        function confirmReorder() {
+            const list = document.getElementById('reorderList');
+            const items = list.querySelectorAll('.reorder-item');
+            const newOrder = [];
+            
+            items.forEach(item => {
+                const oldIndex = parseInt(item.getAttribute('data-index'));
+                newOrder.push(currentExercises[oldIndex]);
+            });
+            
+            currentExercises = newOrder;
+            renderExercises();
+            document.getElementById('reorderModal').classList.remove('show');
         }
 
         function removeExercise(index) {
@@ -4422,7 +4630,19 @@ Rispondi SOLO con JSON valido, senza testo extra.
         // PROGRESS FUNCTIONS
         function renderProgress() {
             const container = document.getElementById('progressList');
-            const progressData = calculateProgressFromHistory();
+            let progressData = calculateProgressFromHistory();
+            
+            // Filtra per gruppo muscolare se selezionato
+            if (selectedMuscleGroup !== null) {
+                const filteredData = {};
+                Object.entries(progressData).forEach(([exerciseName, data]) => {
+                    const muscles = getMuscleGroupsForExercise(exerciseName);
+                    if (muscles.includes(selectedMuscleGroup)) {
+                        filteredData[exerciseName] = data;
+                    }
+                });
+                progressData = filteredData;
+            }
             
             if (Object.keys(progressData).length === 0) {
                 container.innerHTML = `
@@ -4578,8 +4798,16 @@ Rispondi SOLO con JSON valido, senza testo extra.
                 return;
             }
             
-            // Aggrega volume per data
+            // Aggrega volume per data E salva il nome dell'allenamento
             const volumeByDate = {};
+            const workoutNamesByDate = {};
+            
+            // Mappa date ai nomi allenamenti
+            workoutHistory.forEach(workout => {
+                const dateKey = new Date(workout.date).toLocaleDateString('it-IT', { month: 'short', day: 'numeric' });
+                workoutNamesByDate[dateKey] = workout.name || 'Allenamento';
+            });
+            
             Object.entries(progressData).forEach(([exerciseName, data]) => {
                 data.forEach(session => {
                     const date = new Date(session.date).toLocaleDateString('it-IT', { month: 'short', day: 'numeric' });
@@ -4616,7 +4844,19 @@ Rispondi SOLO con JSON valido, senza testo extra.
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { display: false }
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: function(tooltipItems) {
+                                    const date = tooltipItems[0].label;
+                                    const workoutName = workoutNamesByDate[date] || 'Allenamento';
+                                    return `${workoutName} (${date})`;
+                                },
+                                label: function(context) {
+                                    return `Volume: ${context.parsed.y}kg`;
+                                }
+                            }
+                        }
                     },
                     scales: {
                         y: {
@@ -4647,6 +4887,18 @@ Rispondi SOLO con JSON valido, senza testo extra.
             const exerciseFilter = document.getElementById('exerciseFilter').value;
             
             let progressData = calculateProgressFromHistory();
+            
+            // Filtra per gruppo muscolare SE selezionato
+            if (selectedMuscleGroup !== null) {
+                const filteredData = {};
+                Object.entries(progressData).forEach(([exerciseName, data]) => {
+                    const muscles = getMuscleGroupsForExercise(exerciseName);
+                    if (muscles.includes(selectedMuscleGroup)) {
+                        filteredData[exerciseName] = data;
+                    }
+                });
+                progressData = filteredData;
+            }
             
             // Filtra per esercizio PRIMA del filtraggio temporale
             if (exerciseFilter && exerciseFilter !== '') {
@@ -5204,6 +5456,9 @@ Rispondi SOLO con JSON valido, senza testo extra.
 
         // Mostra i muscoli allenati nel periodo selezionato
         function showMusclesWorked() {
+            const container = document.getElementById('muscleGroupButtons');
+            if (!container) return;
+
             const timeFilter = document.getElementById('timeFilter').value;
             const exerciseFilter = document.getElementById('exerciseFilter').value;
             
@@ -5212,14 +5467,13 @@ Rispondi SOLO con JSON valido, senza testo extra.
             
             if (timeFilter !== 'all') {
                 if (timeFilter === 'custom') {
-                    // Usa le date personalizzate
                     const startDateInput = document.getElementById('startDate').value;
                     const endDateInput = document.getElementById('endDate').value;
                     
                     if (startDateInput && endDateInput) {
                         const startDate = new Date(startDateInput);
                         const endDate = new Date(endDateInput);
-                        endDate.setHours(23, 59, 59, 999); // Fine giornata
+                        endDate.setHours(23, 59, 59, 999);
                         
                         filteredWorkouts = filteredWorkouts.filter(workout => {
                             const workoutDate = new Date(workout.date);
@@ -5227,7 +5481,6 @@ Rispondi SOLO con JSON valido, senza testo extra.
                         });
                     }
                 } else {
-                    // Usa i giorni predefiniti
                     const daysBack = parseInt(timeFilter);
                     const cutoffDate = new Date();
                     cutoffDate.setDate(cutoffDate.getDate() - daysBack);
@@ -5239,88 +5492,72 @@ Rispondi SOLO con JSON valido, senza testo extra.
                 }
             }
             
-            // Filtra per esercizio se selezionato
-            if (exerciseFilter && exerciseFilter !== '') {
-                filteredWorkouts = filteredWorkouts.filter(workout => 
-                    workout.exercises.some(ex => ex.name === exerciseFilter)
-                );
-            }
-            
             // Conta la frequenza di ogni muscolo allenato
             const muscleCounts = {};
             ALL_MUSCLES.forEach(muscle => muscleCounts[muscle] = 0);
             
             filteredWorkouts.forEach(workout => {
-                workout.exercises.forEach(exercise => {
-                    // Salta esercizi cardio per il conteggio muscoli
-                    if (exercise.isCardio) return;
-                    
-                    const muscles = getMuscleGroupsForExercise(exercise.name);
-                    muscles.forEach(muscle => {
-                        // Salta anche muscoli 'cardio' dal conteggio
-                        if (muscle !== 'cardio') {
+                if (workout.exercises) {
+                    workout.exercises.forEach(exercise => {
+                        const muscles = getMuscleGroupsForExercise(exercise.name);
+                        muscles.forEach(muscle => {
                             muscleCounts[muscle]++;
-                        }
+                        });
                     });
-                });
+                }
             });
             
-            // Trova il massimo numero di allenamenti per un muscolo
-            const maxCount = Math.max(...Object.values(muscleCounts));
+            // Ordina i muscoli per frequenza
+            const sortedMuscles = Object.entries(muscleCounts)
+                .filter(([_, count]) => count > 0)
+                .sort((a, b) => b[1] - a[1]);
             
-            // Calcola la percentuale
-            const totalMuscles = ALL_MUSCLES.length;
-            const workedMuscles = Object.values(muscleCounts).filter(count => count > 0).length;
-            const percentage = totalMuscles > 0 ? Math.round((workedMuscles / totalMuscles) * 100) : 0;
-            
-            // Funzione per calcolare il gradiente batteria basato sull'intensità
-            function getMuscleBatteryGradient(count) {
-                if (count === 0) return 'linear-gradient(to right, #e5e7eb 0%, #e5e7eb 100%)'; // Tutto grigio per non allenato
-
-                const intensity = count / maxCount;
-                const percentage = Math.round(intensity * 100);
-
-                // Gradiente batteria: verde fino alla percentuale, poi grigio
-                return `linear-gradient(to right, #22c55e 0%, #22c55e ${percentage}%, #e5e7eb ${percentage}%, #e5e7eb 100%)`;
-            }
-            
-            // Mostra i risultati
-            const container = document.getElementById('musclesWorkedContainer');
-            const periodText = timeFilter === 'all' ? 'tutta la cronologia' : 
-                             timeFilter === '7' ? 'ultima settimana' :
-                             timeFilter === '30' ? 'ultimo mese' :
-                             timeFilter === 'custom' ? (() => {
-                                 const startDate = document.getElementById('startDate').value;
-                                 const endDate = document.getElementById('endDate').value;
-                                 if (startDate && endDate) {
-                                     const start = new Date(startDate).toLocaleDateString('it-IT');
-                                     const end = new Date(endDate).toLocaleDateString('it-IT');
-                                     return `periodo ${start} - ${end}`;
-                                 }
-                                 return 'periodo personalizzato';
-                             })() :
-                             `ultimi ${timeFilter} giorni`;
-            
-            container.innerHTML = `
-                <div class="muscle-coverage">
-                    <h4>💪 Copertura Muscolare (${periodText})</h4>
-                    <div class="coverage-bar">
-                        <div class="coverage-fill" style="width: ${percentage}%"></div>
-                        <span class="coverage-text">${workedMuscles}/${totalMuscles} muscoli (${percentage}%)</span>
-                    </div>
-                </div>
-                <div class="muscles-worked">
-                    <h4>Muscoli Allenati</h4>
-                    <div class="muscles-grid">
-                        ${ALL_MUSCLES.map(muscle => {
-                            const count = muscleCounts[muscle];
-                            const gradient = getMuscleBatteryGradient(count);
-                            const percentage = count === 0 ? 0 : Math.round((count / maxCount) * 100);
-                            return `<span class="muscle-tag" style="background: ${gradient};" title="${muscle}: ${count} allenamenti (${percentage}%)">${muscle}</span>`;
-                        }).join('')}
-                    </div>
-                </div>
+            // Renderizza i pulsanti
+            const allButton = `
+                <button class="muscle-group-btn ${selectedMuscleGroup === null ? 'active' : ''}" 
+                        onclick="selectMuscleGroup(null)">
+                    🎯 Tutti (${sortedMuscles.reduce((sum, [_, count]) => sum + count, 0)})
+                </button>
             `;
+            
+            const muscleButtons = sortedMuscles.map(([muscle, count]) => `
+                <button class="muscle-group-btn ${selectedMuscleGroup === muscle ? 'active' : ''}" 
+                        onclick="selectMuscleGroup('${muscle}')">
+                    ${getMuscleEmoji(muscle)} ${capitalizeFirst(muscle)} (${count})
+                </button>
+            `).join('');
+            
+            container.innerHTML = allButton + muscleButtons;
+        }
+
+        function getMuscleEmoji(muscle) {
+            const emojis = {
+                'petto': '💪',
+                'dorso': '🦾',
+                'quadricipiti': '🦵',
+                'bicipiti femorali': '🦿',
+                'polpacci': '👟',
+                'spalle': '🤷',
+                'bicipiti': '💪',
+                'tricipiti': '💪',
+                'addominali': '🏋️',
+                'avambracci': '🤜',
+                'glutei': '🍑',
+                'adduttori': '🦵',
+                'trapezio': '🦾'
+            };
+            return emojis[muscle] || '💪';
+        }
+
+        function capitalizeFirst(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        function selectMuscleGroup(muscle) {
+            selectedMuscleGroup = muscle;
+            showMusclesWorked(); // Aggiorna i pulsanti
+            updateProgressCharts(); // Aggiorna grafici e lista
+            renderProgress(); // Aggiorna la lista esercizi
         }
 
         // CORREZIONE BUG 3: Aggiorna opzioni filtro esercizi
