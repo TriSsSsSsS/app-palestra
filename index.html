@@ -419,11 +419,12 @@
         .toggle-filters-btn {
             background: white;
             border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 15px 20px;
+            border-radius: 8px;
+            padding: 10px 15px;
             width: 100%;
             cursor: pointer;
-            font-weight: 600;
+            font-weight: 500;
+            font-size: 0.9rem;
             color: #4a5568;
             transition: all 0.3s ease;
             text-align: left;
@@ -2072,12 +2073,12 @@
                             
                             <div class="ai-gen-form-group">
                                 <label class="ai-gen-optional-label">⏱️ Tempo per Sessione (min)</label>
-                                <input type="number" name="time" value="60" min="30" max="180">
+                                <input type="number" name="time" placeholder="Auto (40-90 min)" min="30" max="180">
                             </div>
                             
                             <div class="ai-gen-form-group">
                                 <label class="ai-gen-optional-label">🔢 Esercizi per Sessione</label>
-                                <input type="number" name="numExercises" value="6" min="3" max="12">
+                                <input type="number" name="numExercises" placeholder="Auto (5-11)" min="3" max="12">
                             </div>
                         </div>
                         
@@ -2957,6 +2958,10 @@
                     }
                 }
                 
+                // Stima automatica tempo e esercizi se non specificati
+                const estimatedTime = data.time || (40 + Math.floor(Math.random() * 51)); // 40-90 min
+                const estimatedExercises = data.numExercises || (5 + Math.floor(Math.random() * 7)); // 5-11 esercizi
+                
                 const prompt = `[INST]
 Crea una scheda di allenamento personalizzata in formato JSON valido per l'utente seguente.
 Dati utente:
@@ -2966,8 +2971,8 @@ Dati utente:
 - Peso: ${data.weight || 'Non specificato'} kg
 - Livello esperienza: ${data.level || 'Principiante'}
 - Sessioni settimanali: ${sessions}
-- Tempo per sessione: ${data.time || 60} minuti
-- Numero esercizi per sessione: ${data.numExercises || 6}
+- Tempo per sessione: ${estimatedTime} minuti${data.time ? '' : ' (stimato dall\'AI)'}
+- Numero esercizi per sessione: ${estimatedExercises}${data.numExercises ? '' : ' (stimato dall\'AI)'}
 - Obiettivi: ${data.goals || 'Generico'}
 - Esercizi preferiti: ${data.preferredExercises || 'Nessuno'}
 - Tipo di allenamento: ${workoutType || 'Non specificato'}
@@ -5573,14 +5578,23 @@ Rispondi SOLO con JSON valido, senza testo extra.
                 });
             });
             
+            // Filtra esercizi per gruppo muscolare selezionato
+            let filteredExercises = Array.from(allExercises);
+            if (selectedMuscleGroup !== null) {
+                filteredExercises = filteredExercises.filter(exerciseName => {
+                    const muscles = getMuscleGroupsForExercise(exerciseName);
+                    return muscles.includes(selectedMuscleGroup);
+                });
+            }
+            
             // Ricostruisci le opzioni
             exerciseFilter.innerHTML = '<option value="">Tutti gli esercizi</option>' +
-                Array.from(allExercises).sort().map(exercise => 
+                filteredExercises.sort().map(exercise => 
                     `<option value="${exercise}">${exercise}</option>`
                 ).join('');
             
             // Ripristina il valore selezionato se ancora valido
-            if (currentValue && allExercises.has(currentValue)) {
+            if (currentValue && filteredExercises.includes(currentValue)) {
                 exerciseFilter.value = currentValue;
             } else {
                 exerciseFilter.value = '';
