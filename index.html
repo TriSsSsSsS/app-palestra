@@ -501,6 +501,20 @@
             font-weight: 600;
             margin-bottom: 20px;
             text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .chart-info-badge {
+            background: #e6f7ff;
+            color: #0066cc;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 500;
         }
 
         .chart-canvas {
@@ -2026,7 +2040,10 @@
             <!-- PROGRESS CHARTS -->
             <div class="progress-charts">
                 <div class="chart-container">
-                    <h3 class="chart-title">📊 Progressione Peso nel Tempo</h3>
+                    <h3 class="chart-title">
+                        <span>📊 Progressione Peso nel Tempo</span>
+                        <span id="weightChartInfo" class="chart-info-badge" style="display: none;"></span>
+                    </h3>
                     <div class="chart-canvas">
                         <canvas id="weightChart"></canvas>
                     </div>
@@ -2367,6 +2384,23 @@
     <button class="back-to-top" id="backToTop" onclick="scrollToTop()">↑</button>
 
     <script>
+        // FUNZIONE DI NORMALIZZAZIONE ESERCIZI
+        function normalizeExerciseName(name) {
+            if (!name) return '';
+            // Trim spazi, converti in lowercase, rimuovi spazi multipli
+            return name.trim().toLowerCase().replace(/\s+/g, ' ');
+        }
+
+        // Funzione per ottenere il nome formattato (prima lettera maiuscola di ogni parola)
+        function formatExerciseName(name) {
+            if (!name) return '';
+            const normalized = normalizeExerciseName(name);
+            return normalized
+                .split(' ')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+        }
+
         // VARIABILI GLOBALI
         let currentExercises = [];
         let workoutHistory = JSON.parse(localStorage.getItem('workoutHistory') || '[]');
@@ -2825,6 +2859,11 @@
                 // Carica esercizi personalizzati dal localStorage
                 const customExercises = JSON.parse(localStorage.getItem('customExercises') || '{}');
                 Object.assign(PREDEFINED_EXERCISES, customExercises);
+                
+                // Mostra statistiche esercizi nel console
+                const totalPredefined = Object.keys(PREDEFINED_EXERCISES).length;
+                const totalCustom = Object.keys(customExercises).length;
+                console.log(`📊 Database Esercizi: ${totalPredefined} totali (${totalCustom} personalizzati)`);
 
                 updateWorkoutDate();
                 updateStats();
@@ -3223,23 +3262,35 @@ Rispondi SOLO con JSON valido, senza testo extra.
                             // Accorcia il nome della scheda (es: "Giorno 1" invece del titolo completo)
                             customSchede[dayId] = {
                                 name: day.day || `Giorno ${index + 1}`,
-                                exercises: day.exercises.map(ex => ({
-                                    name: ex.name,
-                                    sets: parseInt(ex.sets) || 3,
-                                    reps: parseInt(ex.reps) || 10,
-                                    weight: 0,  // L'utente inserirà il peso durante l'allenamento
-                                    notes: ex.notes || ''  // Salva le note dell'AI
-                                }))
+                                exercises: day.exercises.map(ex => {
+                                    // Salva ogni esercizio nel database locale
+                                    const muscles = getMuscleGroupsForExercise(ex.name);
+                                    saveExerciseToDatabase(ex.name, muscles);
+                                    
+                                    return {
+                                        name: formatExerciseName(ex.name),
+                                        sets: parseInt(ex.sets) || 3,
+                                        reps: parseInt(ex.reps) || 10,
+                                        weight: 0,  // L'utente inserirà il peso durante l'allenamento
+                                        notes: ex.notes || ''  // Salva le note dell'AI
+                                    };
+                                })
                             };
                         });
                     } else {
                         // Fallback: se non ci sono workout_days, prova a salvare come singola scheda
                         customSchede[schedeId] = {
                             name: 'Scheda AI',
-                            exercises: (workout.exercises || []).map(ex => ({
-                                ...ex,
-                                notes: ex.notes || ''
-                            }))
+                            exercises: (workout.exercises || []).map(ex => {
+                                // Salva ogni esercizio nel database locale
+                                const muscles = getMuscleGroupsForExercise(ex.name);
+                                saveExerciseToDatabase(ex.name, muscles);
+                                
+                                return {
+                                    ...ex,
+                                    notes: ex.notes || ''
+                                };
+                            })
                         };
                     }
                     
@@ -3820,20 +3871,26 @@ Rispondi SOLO con JSON valido, senza testo extra.
         }
 
         function getExerciseSuggestions(query) {
-            // Inizia con esercizi predefiniti
-            let allExercises = Object.keys(PREDEFINED_EXERCISES);
+            const normalizedQuery = normalizeExerciseName(query);
+            
+            // Inizia con esercizi predefiniti (formattati)
+            let allExercises = Object.keys(PREDEFINED_EXERCISES).map(name => formatExerciseName(name));
             
             // Aggiungi esercizi dalla cronologia degli allenamenti
+            const exerciseSet = new Set(allExercises.map(e => normalizeExerciseName(e)));
+            
             workoutHistory.forEach(workout => {
                 workout.exercises.forEach(exercise => {
-                    if (!allExercises.includes(exercise.name)) {
-                        allExercises.push(exercise.name);
+                    const normalized = normalizeExerciseName(exercise.name);
+                    if (!exerciseSet.has(normalized)) {
+                        exerciseSet.add(normalized);
+                        allExercises.push(formatExerciseName(exercise.name));
                     }
                 });
             });
             
             return allExercises
-                .filter(exercise => exercise.toLowerCase().includes(query))
+                .filter(exercise => normalizeExerciseName(exercise).includes(normalizedQuery))
                 .sort()
                 .slice(0, 8); // Aumentato a 8 suggerimenti
         }
@@ -3938,26 +3995,29 @@ Rispondi SOLO con JSON valido, senza testo extra.
                 return;
             }
 
+            // Normalizza e formatta il nome dell'esercizio
+            const formattedName = formatExerciseName(name);
+
             // Se è il primo esercizio aggiunto manualmente, resetta il nome scheda
             if (currentExercises.length === 0) {
                 currentSchedaName = null;
             }
 
-            // Controlla se l'esercizio è già nel database
-            const normalizedName = name.toLowerCase();
+            // Controlla se l'esercizio è già nel database (usa normalizzazione)
+            const normalizedName = normalizeExerciseName(name);
             const isInDatabase = PREDEFINED_EXERCISES[normalizedName] !== undefined;
             const hasBeenUsed = workoutHistory.some(workout => 
-                workout.exercises.some(ex => ex.name.toLowerCase() === normalizedName)
+                workout.exercises.some(ex => normalizeExerciseName(ex.name) === normalizedName)
             );
 
             // Se l'esercizio non è mai stato usato e non è nel database, mostra la modale di configurazione
             if (!isInDatabase && !hasBeenUsed) {
-                showMuscleSelectionModal(name);
+                showMuscleSelectionModal(formattedName);
                 return;
             }
 
-            // Procedi normalmente
-            addExerciseToWorkout(name);
+            // Procedi normalmente con il nome formattato
+            addExerciseToWorkout(formattedName);
         }
 
         function addExerciseToWorkout(name, customParams = null, isCardioOverride = null) {
@@ -4053,11 +4113,8 @@ Rispondi SOLO con JSON valido, senza testo extra.
                 selectedMuscles.push('cardio');
             }
 
-            // Aggiungi al database predefinito
-            PREDEFINED_EXERCISES[exerciseName.toLowerCase()] = selectedMuscles;
-
-            // Salva nel localStorage per persistenza
-            localStorage.setItem('customExercises', JSON.stringify(PREDEFINED_EXERCISES));
+            // Salva nel database usando la funzione centralizzata
+            saveExerciseToDatabase(exerciseName, selectedMuscles);
 
             // Ottieni i valori dei campi di input
             let exerciseParams = {};
@@ -4094,14 +4151,14 @@ Rispondi SOLO con JSON valido, senza testo extra.
 
         function getLastExerciseData(exerciseName) {
             if (!exerciseName || workoutHistory.length === 0) return null;
-            const target = exerciseName.toLowerCase();
+            const target = normalizeExerciseName(exerciseName);
 
             for (let i = workoutHistory.length - 1; i >= 0; i--) {
                 const workout = workoutHistory[i];
                 if (!workout || !Array.isArray(workout.exercises)) continue;
 
                 const match = workout.exercises.find(ex =>
-                    ex && ex.name && ex.name.toLowerCase() === target
+                    ex && ex.name && normalizeExerciseName(ex.name) === target
                 );
 
                 if (match) {
@@ -4384,13 +4441,19 @@ Rispondi SOLO con JSON valido, senza testo extra.
             const workout = {
                 id: Date.now() + Math.random(), // CORREZIONE BUG 2: ID univoco
                 date: workoutDateInput, // Usa direttamente il valore dell'input (formato YYYY-MM-DD)
-                exercises: currentExercises.map(ex => ({
-                    name: ex.name,
-                    sets: ex.sets,
-                    reps: ex.reps,
-                    weight: ex.weight,
-                    notes: ex.notes || ''
-                })),
+                exercises: currentExercises.map(ex => {
+                    // Salva ogni esercizio nel database locale
+                    const muscles = getMuscleGroupsForExercise(ex.name);
+                    saveExerciseToDatabase(ex.name, muscles);
+                    
+                    return {
+                        name: ex.name,
+                        sets: ex.sets,
+                        reps: ex.reps,
+                        weight: ex.weight,
+                        notes: ex.notes || ''
+                    };
+                }),
                 duration: duration,
                 notes: notes,
                 schedaName: currentSchedaName
@@ -4476,6 +4539,10 @@ Rispondi SOLO con JSON valido, senza testo extra.
             currentSchedaName = Scheda.name;
 
             currentExercises = Scheda.exercises.map(ex => {
+                // Salva ogni esercizio nel database locale quando viene caricato
+                const muscles = getMuscleGroupsForExercise(ex.name);
+                saveExerciseToDatabase(ex.name, muscles);
+                
                 const isCardio = isCardioExercise(ex.name);
                 const lastData = getLastExerciseData(ex.name);
                 
@@ -4784,13 +4851,19 @@ Rispondi SOLO con JSON valido, senza testo extra.
                 return;
             }
 
-            const datasets = Object.entries(progressData).map(([exerciseName, data], index) => {
-                const colors = ['#4a5568', '#48bb78', '#ed8936', '#9f7aea', '#38b2ac'];
+            // Ordina gli esercizi per numero di sessioni (più frequenti prima)
+            const sortedExercises = Object.entries(progressData)
+                .map(([name, data]) => ({ name, data, count: data.length }))
+                .sort((a, b) => b.count - a.count)
+                .slice(0, 10); // Prendi solo i top 10
+
+            const datasets = sortedExercises.map((exercise, index) => {
+                const colors = ['#4a5568', '#48bb78', '#ed8936', '#9f7aea', '#38b2ac', '#f56565', '#4299e1', '#ed64a6', '#ecc94b', '#9ae6b4'];
                 const color = colors[index % colors.length];
                 
                 return {
-                    label: exerciseName,
-                    data: data.map(session => ({
+                    label: exercise.name,
+                    data: exercise.data.map(session => ({
                         x: new Date(session.date).toLocaleDateString('it-IT', { month: 'short', day: 'numeric' }),
                         y: session.weight
                     })),
@@ -4800,6 +4873,18 @@ Rispondi SOLO con JSON valido, senza testo extra.
                     fill: false
                 };
             });
+
+            const totalExercises = Object.keys(progressData).length;
+            const showingCount = sortedExercises.length;
+
+            // Mostra badge informativo se ci sono più esercizi
+            const infoBadge = document.getElementById('weightChartInfo');
+            if (totalExercises > 10) {
+                infoBadge.textContent = `Top ${showingCount} di ${totalExercises} esercizi`;
+                infoBadge.style.display = 'inline-block';
+            } else {
+                infoBadge.style.display = 'none';
+            }
 
             weightChart = new Chart(ctx, {
                 type: 'line',
@@ -4813,16 +4898,16 @@ Rispondi SOLO con JSON valido, senza testo extra.
                     },
                     plugins: {
                         legend: {
-                            display: Object.keys(progressData).length > 1,
+                            display: showingCount > 1,
                             position: 'top',
                             labels: {
                                 usePointStyle: true,
                                 pointStyle: 'circle',
-                                boxWidth: 12,
-                                boxHeight: 12,
-                                padding: 8,
+                                boxWidth: 8,
+                                boxHeight: 8,
+                                padding: 6,
                                 font: {
-                                    size: 11
+                                    size: 10
                                 }
                             }
                         }
@@ -5041,7 +5126,7 @@ Rispondi SOLO con JSON valido, senza testo extra.
 
         // Funzione per mappare esercizi ai muscoli (gruppi semplificati)
         function getMuscleGroupsForExercise(exerciseName) {
-            const name = exerciseName.toLowerCase();
+            const name = normalizeExerciseName(exerciseName);
             
             // Prima controlla il database predefinito
             if (PREDEFINED_EXERCISES[name]) {
@@ -5505,10 +5590,39 @@ Rispondi SOLO con JSON valido, senza testo extra.
             'circuit training': ['cardio']
         };
 
+        // Carica esercizi personalizzati dal localStorage e uniscili al database predefinito
+        (function loadCustomExercises() {
+            try {
+                const customExercises = JSON.parse(localStorage.getItem('customExercises') || '{}');
+                Object.assign(PREDEFINED_EXERCISES, customExercises);
+            } catch (e) {
+                console.error('Errore nel caricamento esercizi personalizzati:', e);
+            }
+        })();
+
+        // Funzione per salvare un esercizio nel database locale
+        function saveExerciseToDatabase(exerciseName, muscles) {
+            const normalized = normalizeExerciseName(exerciseName);
+            
+            // Se l'esercizio non è già nel database, aggiungilo
+            if (!PREDEFINED_EXERCISES[normalized]) {
+                PREDEFINED_EXERCISES[normalized] = muscles || [];
+                
+                // Salva nel localStorage
+                try {
+                    const customExercises = JSON.parse(localStorage.getItem('customExercises') || '{}');
+                    customExercises[normalized] = muscles || [];
+                    localStorage.setItem('customExercises', JSON.stringify(customExercises));
+                } catch (e) {
+                    console.error('Errore nel salvataggio esercizio:', e);
+                }
+            }
+        }
+
         // Funzione helper per verificare se un esercizio è cardio
         function isCardioExercise(exerciseName) {
             // Controlla se il nome contiene indicazioni di cardio
-            const nameLower = exerciseName.toLowerCase();
+            const nameLower = normalizeExerciseName(exerciseName);
             if (nameLower.includes('(cardio)') || nameLower.includes('cardio') || 
                 nameLower.includes('cyclette') || nameLower.includes('ellittica') || 
                 nameLower.includes('tapis roulant') || nameLower.includes('camminata') ||
@@ -5668,14 +5782,23 @@ Rispondi SOLO con JSON valido, senza testo extra.
 
         function calculateProgressFromHistory() {
             const exerciseProgress = {};
+            const nameMapping = {}; // Mappa normalizzato -> formattato
             
             workoutHistory.forEach(workout => {
                 workout.exercises.forEach(exercise => {
-                    if (!exerciseProgress[exercise.name]) {
-                        exerciseProgress[exercise.name] = [];
+                    const normalized = normalizeExerciseName(exercise.name);
+                    const formatted = formatExerciseName(exercise.name);
+                    
+                    // Usa il nome normalizzato come chiave, ma mantieni il formato più recente
+                    if (!nameMapping[normalized]) {
+                        nameMapping[normalized] = formatted;
                     }
                     
-                    exerciseProgress[exercise.name].push({
+                    if (!exerciseProgress[normalized]) {
+                        exerciseProgress[normalized] = [];
+                    }
+                    
+                    exerciseProgress[normalized].push({
                         date: workout.date,
                         sets: exercise.sets,
                         reps: exercise.reps,
@@ -5685,11 +5808,16 @@ Rispondi SOLO con JSON valido, senza testo extra.
                 });
             });
             
-            Object.keys(exerciseProgress).forEach(exerciseName => {
-                exerciseProgress[exerciseName].sort((a, b) => new Date(a.date) - new Date(b.date));
+            // Converti le chiavi normalizzate in nomi formattati
+            const formattedProgress = {};
+            Object.keys(exerciseProgress).forEach(normalized => {
+                const formattedName = nameMapping[normalized];
+                formattedProgress[formattedName] = exerciseProgress[normalized].sort((a, b) => 
+                    new Date(a.date) - new Date(b.date)
+                );
             });
             
-            return exerciseProgress;
+            return formattedProgress;
         }
 
         // STATS FUNCTIONS
@@ -6225,4 +6353,3 @@ Rispondi SOLO con JSON valido, senza testo extra.
 
 </body>
 </html>
-
