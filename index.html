@@ -390,13 +390,13 @@
         }
 
         .muscle-group-btn {
-            padding: 8px 16px;
+            padding: 6px 14px;
             border: 2px solid #e2e8f0;
             background: white;
             border-radius: 20px;
             cursor: pointer;
             font-weight: 600;
-            font-size: 14px;
+            font-size: 0.85rem;
             transition: all 0.3s ease;
             color: #4a5568;
         }
@@ -1345,35 +1345,26 @@
             color: #2d3748;
         }
 
-        .reorder-controls {
-            display: flex;
-            gap: 5px;
-        }
-
         .reorder-arrow-btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            border-radius: 6px;
             padding: 8px 12px;
+            border-radius: 6px;
             cursor: pointer;
             font-size: 16px;
-            transition: all 0.3s;
+            font-weight: bold;
+            transition: all 0.2s;
         }
 
         .reorder-arrow-btn:hover {
             transform: scale(1.1);
-            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
         }
 
         .reorder-arrow-btn:disabled {
             opacity: 0.3;
             cursor: not-allowed;
-        }
-
-        .reorder-arrow-btn:disabled:hover {
-            transform: none;
-            box-shadow: none;
         }
 
         /* MUSCLE SELECTION MODAL */
@@ -1965,9 +1956,9 @@
                 <!-- I Scheda verranno inseriti qui -->
             </div>
 
-            <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;">
+            <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
                 <button class="add-exercise-btn" id="addExerciseBtn">➕ Aggiungi Esercizio</button>
-                <button id="reorderExercisesBtn" onclick="showReorderModal()" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; display: none;">☰ Ordina</button>
+                <button class="add-exercise-btn" id="reorderExercisesBtn" onclick="showReorderModal()" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); display: none; padding: 8px 16px; font-size: 0.85rem;">☰ Ordina</button>
             </div>
 
             <div id="exercisesList">
@@ -4288,82 +4279,32 @@ Rispondi SOLO con JSON valido, senza testo extra.
             const list = document.getElementById('reorderList');
             
             list.innerHTML = currentExercises.map((ex, index) => `
-                <div class="reorder-item" draggable="true" data-index="${index}">
-                    <span class="reorder-handle">☰</span>
-                    <span class="reorder-item-name">${ex.name}</span>
-                </div>
-            `).join('');
-            
-            // Add drag and drop functionality
-            const items = list.querySelectorAll('.reorder-item');
-            let draggedItem = null;
-            
-            items.forEach(item => {
-                item.addEventListener('dragstart', function() {
-                    draggedItem = this;
-                    this.classList.add('dragging');
-                });
-                
-                item.addEventListener('dragend', function() {
-                    this.classList.remove('dragging');
-                });
-                
-                item.addEventListener('dragover', function(e) {
-                    e.preventDefault();
-                    const afterElement = getDragAfterElement(list, e.clientY);
-                    if (afterElement == null) {
-                        list.appendChild(draggedItem);
-                    } else {
-                        list.insertBefore(draggedItem, afterElement);
-                    }
-                });
-            });
-            
-            modal.classList.add('show');
-        }
-
-        function getDragAfterElement(container, y) {
-            const draggableElements = [...container.querySelectorAll('.reorder-item:not(.dragging)')];
-            
-            return draggableElements.reduce((closest, child) => {
-                const box = child.getBoundingClientRect();
-                const offset = y - box.top - box.height / 2;
-                
-                if (offset < 0 && offset > closest.offset) {
-                    return { offset: offset, element: child };
-                } else {
-                    return closest;
-                }
-        function showReorderModal() {
-            const modal = document.getElementById('reorderModal');
-            const list = document.getElementById('reorderList');
-            
-            renderReorderList();
-            modal.classList.add('show');
-        }
-
-        function renderReorderList() {
-            const list = document.getElementById('reorderList');
-            list.innerHTML = currentExercises.map((ex, index) => `
                 <div class="reorder-item" data-index="${index}">
                     <span class="reorder-item-name">${ex.name}</span>
-                    <div class="reorder-controls">
-                        <button class="reorder-arrow-btn" onclick="moveItemInReorder(${index}, -1)" ${index === 0 ? 'disabled' : ''}>↑</button>
-                        <button class="reorder-arrow-btn" onclick="moveItemInReorder(${index}, 1)" ${index === currentExercises.length - 1 ? 'disabled' : ''}>↓</button>
-                    </div>
+                    <button class="reorder-arrow-btn" onclick="moveExerciseInModal(${index}, -1)" ${index === 0 ? 'disabled' : ''}>↑</button>
+                    <button class="reorder-arrow-btn" onclick="moveExerciseInModal(${index}, 1)" ${index === currentExercises.length - 1 ? 'disabled' : ''}>↓</button>
                 </div>
             `).join('');
+            
+            modal.classList.add('show');
         }
 
-        function moveItemInReorder(index, direction) {
+        function moveExerciseInModal(index, direction) {
             const newIndex = index + direction;
             if (newIndex < 0 || newIndex >= currentExercises.length) return;
             
-            // Scambia gli esercizi
+            // Swap exercises
             [currentExercises[index], currentExercises[newIndex]] = [currentExercises[newIndex], currentExercises[index]];
             
-            // Ri-renderizza la lista
-            renderReorderList();
+            // Re-render the modal content
+            const list = document.getElementById('reorderList');
+            list.innerHTML = currentExercises.map((ex, i) => `
+                <div class="reorder-item" data-index="${i}">
+                    <span class="reorder-item-name">${ex.name}</span>
+                    <button class="reorder-arrow-btn" onclick="moveExerciseInModal(${i}, -1)" ${i === 0 ? 'disabled' : ''}>↑</button>
+                    <button class="reorder-arrow-btn" onclick="moveExerciseInModal(${i}, 1)" ${i === currentExercises.length - 1 ? 'disabled' : ''}>↓</button>
+                </div>
+            `).join('');
         }
 
         function getDragAfterElement(container, y) {
@@ -4382,7 +4323,7 @@ Rispondi SOLO con JSON valido, senza testo extra.
         }
 
         function confirmReorder() {
-            // Gli esercizi sono già stati riordinati in tempo reale
+            // Gli esercizi sono già stati riordinati in currentExercises tramite moveExerciseInModal
             renderExercises();
             document.getElementById('reorderModal').classList.remove('show');
         }
