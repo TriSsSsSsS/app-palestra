@@ -5561,6 +5561,7 @@ Rispondi SOLO con JSON valido, senza testo extra.
         function selectMuscleGroup(muscle) {
             selectedMuscleGroup = muscle;
             showMusclesWorked(); // Aggiorna i pulsanti
+            updateExerciseFilterOptions(); // Aggiorna la lista a tendina esercizi
             updateProgressCharts(); // Aggiorna grafici e lista
             renderProgress(); // Aggiorna la lista esercizi
         }
