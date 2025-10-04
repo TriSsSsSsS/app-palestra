@@ -378,24 +378,25 @@
         .muscle-groups-filter {
             background: white;
             border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
+            padding: 15px;
+            margin-bottom: 15px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
         .muscle-group-btns {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 8px;
         }
 
         .muscle-group-btn {
-            padding: 10px 20px;
+            padding: 8px 16px;
             border: 2px solid #e2e8f0;
             background: white;
-            border-radius: 25px;
+            border-radius: 20px;
             cursor: pointer;
             font-weight: 600;
+            font-size: 14px;
             transition: all 0.3s ease;
             color: #4a5568;
         }
@@ -1336,26 +1337,43 @@
             background: #f7fafc;
             border-radius: 8px;
             border: 1px solid #e2e8f0;
-            cursor: grab;
-        }
-
-        .reorder-item:active {
-            cursor: grabbing;
-        }
-
-        .reorder-item.dragging {
-            opacity: 0.5;
-        }
-
-        .reorder-handle {
-            font-size: 1.2em;
-            color: #718096;
         }
 
         .reorder-item-name {
             flex: 1;
             font-weight: 500;
             color: #2d3748;
+        }
+
+        .reorder-controls {
+            display: flex;
+            gap: 5px;
+        }
+
+        .reorder-arrow-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .reorder-arrow-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .reorder-arrow-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .reorder-arrow-btn:disabled:hover {
+            transform: none;
+            box-shadow: none;
         }
 
         /* MUSCLE SELECTION MODAL */
@@ -1947,9 +1965,9 @@
                 <!-- I Scheda verranno inseriti qui -->
             </div>
 
-            <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+            <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;">
                 <button class="add-exercise-btn" id="addExerciseBtn">➕ Aggiungi Esercizio</button>
-                <button class="add-exercise-btn" id="reorderExercisesBtn" onclick="showReorderModal()" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); display: none;">☰ Ordina Esercizi</button>
+                <button id="reorderExercisesBtn" onclick="showReorderModal()" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; display: none;">☰ Ordina</button>
             </div>
 
             <div id="exercisesList">
@@ -4316,20 +4334,55 @@ Rispondi SOLO con JSON valido, senza testo extra.
                 } else {
                     return closest;
                 }
+        function showReorderModal() {
+            const modal = document.getElementById('reorderModal');
+            const list = document.getElementById('reorderList');
+            
+            renderReorderList();
+            modal.classList.add('show');
+        }
+
+        function renderReorderList() {
+            const list = document.getElementById('reorderList');
+            list.innerHTML = currentExercises.map((ex, index) => `
+                <div class="reorder-item" data-index="${index}">
+                    <span class="reorder-item-name">${ex.name}</span>
+                    <div class="reorder-controls">
+                        <button class="reorder-arrow-btn" onclick="moveItemInReorder(${index}, -1)" ${index === 0 ? 'disabled' : ''}>↑</button>
+                        <button class="reorder-arrow-btn" onclick="moveItemInReorder(${index}, 1)" ${index === currentExercises.length - 1 ? 'disabled' : ''}>↓</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function moveItemInReorder(index, direction) {
+            const newIndex = index + direction;
+            if (newIndex < 0 || newIndex >= currentExercises.length) return;
+            
+            // Scambia gli esercizi
+            [currentExercises[index], currentExercises[newIndex]] = [currentExercises[newIndex], currentExercises[index]];
+            
+            // Ri-renderizza la lista
+            renderReorderList();
+        }
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.reorder-item:not(.dragging)')];
+            
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
             }, { offset: Number.NEGATIVE_INFINITY }).element;
         }
 
         function confirmReorder() {
-            const list = document.getElementById('reorderList');
-            const items = list.querySelectorAll('.reorder-item');
-            const newOrder = [];
-            
-            items.forEach(item => {
-                const oldIndex = parseInt(item.getAttribute('data-index'));
-                newOrder.push(currentExercises[oldIndex]);
-            });
-            
-            currentExercises = newOrder;
+            // Gli esercizi sono già stati riordinati in tempo reale
             renderExercises();
             document.getElementById('reorderModal').classList.remove('show');
         }
