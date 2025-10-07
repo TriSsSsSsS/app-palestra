@@ -2409,7 +2409,8 @@
         let workoutHistory = JSON.parse(localStorage.getItem('workoutHistory') || '[]');
         
         // Valida e pulisce workoutHistory per evitare errori
-        workoutHistory = workoutHistory.filter(w => w && typeof w.id === 'string');
+        // Accetta sia string che number come ID validi
+        workoutHistory = workoutHistory.filter(w => w && (w.id !== undefined && w.id !== null));
         
         let currentCalendarDate = new Date();
         let currentEditingScheda = null;
@@ -2740,16 +2741,32 @@
         // INIZIALIZZAZIONE ALLENAMENTI DI ESEMPIO
         function initializeSampleWorkouts() {
             // Controlla se ci sono già allenamenti salvati (non esempi)
-            const hasRealWorkouts = workoutHistory.some(w => !w.id.startsWith('sample_') && !w.isSample);
+            const hasRealWorkouts = workoutHistory.some(w => {
+                const idStr = String(w.id);
+                return !idStr.startsWith('sample_') && !w.isSample;
+            });
+            
             if (hasRealWorkouts) {
-                // Se l'utente ha salvato almeno un allenamento, rimuovi tutti gli esempi
-                workoutHistory = workoutHistory.filter(w => !w.isSample && !w.id.startsWith('sample_'));
-                localStorage.setItem('workoutHistory', JSON.stringify(workoutHistory));
+                // Se l'utente ha salvato almeno un allenamento, rimuovi solo gli esempi
+                const filtered = workoutHistory.filter(w => {
+                    const idStr = String(w.id);
+                    return !w.isSample && !idStr.startsWith('sample_');
+                });
+                
+                // Solo se effettivamente abbiamo rimosso qualcosa, aggiorna
+                if (filtered.length !== workoutHistory.length) {
+                    workoutHistory.length = 0;
+                    workoutHistory.push(...filtered);
+                    localStorage.setItem('workoutHistory', JSON.stringify(workoutHistory));
+                }
                 return;
             }
 
             // Controlla se gli esempi esistono già
-            const hasSamples = workoutHistory.some(w => w.id.startsWith('sample_'));
+            const hasSamples = workoutHistory.some(w => {
+                const idStr = String(w.id);
+                return idStr.startsWith('sample_');
+            });
             if (hasSamples) return;
 
             const today = new Date();
