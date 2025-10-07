@@ -1972,11 +1972,14 @@
 
             <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
                 <button class="add-exercise-btn" id="addExerciseBtn">➕ Aggiungi Esercizio</button>
-                <button class="add-exercise-btn" id="reorderExercisesBtn" onclick="showReorderModal()" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); display: none; padding: 8px 16px; font-size: 0.85rem;">☰ Ordina</button>
             </div>
 
             <div id="exercisesList">
                 <!-- Gli esercizi verranno inseriti qui -->
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+                <button class="add-exercise-btn" id="reorderExercisesBtn" onclick="showReorderModal()" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); display: none; padding: 8px 16px; font-size: 0.85rem;">☰ Ordina</button>
             </div>
 
             <button class="save-workout-btn" id="saveWorkoutBtn" style="display: none;">💾 Salva Allenamento</button>
@@ -2282,7 +2285,7 @@
                         </label>
                     </div>
                     
-                    <div class="muscles-grid-selection">
+                    <div class="muscles-grid-selection" id="musclesGridSelection">
                         <h4>Seleziona i muscoli allenati:</h4>
                         <div class="muscles-checkboxes">
                             <label class="muscle-checkbox">
@@ -2420,7 +2423,8 @@
     let unlockedCodes = JSON.parse(localStorage.getItem('unlockedCodes') || '[]');
         const codeMappings = {
             'Giulia24': ['giulia24_giorno1', 'giulia24_giorno2', 'giulia24_giorno3'],
-            'Giovanna0': ['giovanna0_alta_a', 'giovanna0_bassa_a', 'giovanna0_alta_b', 'giovanna0_bassa_b']
+            'Giovanna0': ['giovanna0_alta_a', 'giovanna0_bassa_a', 'giovanna0_alta_b', 'giovanna0_bassa_b'],
+            'doriano0': ['doriano0_giorno1', 'doriano0_giorno2']
         };
 
         const protectedSchedeData = {
@@ -2524,6 +2528,36 @@
                     { name: 'Camminata in Salita (Cardio)', sets: 1, reps: 20, weight: 0 },
                     { name: 'Stretching Quadricipiti, Glutei, Femorali', sets: 1, reps: 7, weight: 0 }
                 ]
+            },
+            'doriano0_giorno1': {
+                name: '💪 Doriano0 - Giorno 1: Full Body A',
+                exercises: [
+                    { name: 'Squat', sets: 3, reps: 12, weight: 60 },
+                    { name: 'Panca Piana', sets: 3, reps: 10, weight: 60 },
+                    { name: 'Lat Machine', sets: 3, reps: 12, weight: 50 },
+                    { name: 'Leg Press', sets: 3, reps: 12, weight: 120 },
+                    { name: 'Military Press', sets: 3, reps: 10, weight: 30 },
+                    { name: 'Curl Bilanciere', sets: 3, reps: 12, weight: 25 },
+                    { name: 'Tricep Pushdown', sets: 3, reps: 12, weight: 25 },
+                    { name: 'Plank', sets: 3, reps: 45, weight: 0 },
+                    { name: 'Crunch', sets: 3, reps: 20, weight: 0 },
+                    { name: 'Tapis Roulant o Cyclette (Cardio)', sets: 1, reps: 15, weight: 0 }
+                ]
+            },
+            'doriano0_giorno2': {
+                name: '🔥 Doriano0 - Giorno 2: Full Body B',
+                exercises: [
+                    { name: 'Stacchi Rumeni', sets: 3, reps: 10, weight: 70 },
+                    { name: 'Panca Inclinata', sets: 3, reps: 10, weight: 55 },
+                    { name: 'Rematore Bilanciere', sets: 3, reps: 10, weight: 60 },
+                    { name: 'Leg Curl', sets: 3, reps: 12, weight: 35 },
+                    { name: 'Alzate Laterali', sets: 3, reps: 15, weight: 8 },
+                    { name: 'Hammer Curl', sets: 3, reps: 12, weight: 20 },
+                    { name: 'Dips', sets: 3, reps: 10, weight: 0 },
+                    { name: 'Russian Twist', sets: 3, reps: 30, weight: 0 },
+                    { name: 'Leg Raises', sets: 3, reps: 15, weight: 0 },
+                    { name: 'Camminata in Salita (Cardio)', sets: 1, reps: 15, weight: 0 }
+                ]
             }
         };
 
@@ -2582,7 +2616,7 @@
         (function purgeProtectedSchede() {
             let removed = false;
             Object.keys(customSchede).forEach(key => {
-                if (key.startsWith('giulia24_') || key.startsWith('giovanna0_')) {
+                if (key.startsWith('giulia24_') || key.startsWith('giovanna0_') || key.startsWith('doriano0_')) {
                     delete customSchede[key];
                     removed = true;
                 }
@@ -2706,8 +2740,13 @@
         // INIZIALIZZAZIONE ALLENAMENTI DI ESEMPIO
         function initializeSampleWorkouts() {
             // Controlla se ci sono già allenamenti salvati (non esempi)
-            const hasRealWorkouts = workoutHistory.some(w => !w.id.startsWith('sample_'));
-            if (hasRealWorkouts) return;
+            const hasRealWorkouts = workoutHistory.some(w => !w.id.startsWith('sample_') && !w.isSample);
+            if (hasRealWorkouts) {
+                // Se l'utente ha salvato almeno un allenamento, rimuovi tutti gli esempi
+                workoutHistory = workoutHistory.filter(w => !w.isSample && !w.id.startsWith('sample_'));
+                localStorage.setItem('workoutHistory', JSON.stringify(workoutHistory));
+                return;
+            }
 
             // Controlla se gli esempi esistono già
             const hasSamples = workoutHistory.some(w => w.id.startsWith('sample_'));
@@ -3815,7 +3854,13 @@ Rispondi SOLO con JSON valido, senza testo extra.
                         }
                     });
                     
-                    templateData = { name, exercises };
+                    // Limita il nome della scheda a massimo 10 caratteri
+                    let limitedName = name;
+                    if (name.length > 10) {
+                        limitedName = name.substring(0, 10);
+                    }
+                    
+                    templateData = { name: limitedName, exercises };
                 }
             });
             
@@ -4082,15 +4127,24 @@ Rispondi SOLO con JSON valido, senza testo extra.
             const traditionalInputs = document.getElementById('traditionalInputs');
             const cardioInputs = document.getElementById('cardioInputs');
             const inputsTitle = document.getElementById('inputsTitle');
+            const musclesGrid = document.getElementById('musclesGridSelection');
             
             if (exerciseType === 'cardio') {
                 traditionalInputs.style.display = 'none';
                 cardioInputs.style.display = 'flex';
                 inputsTitle.textContent = 'Specifica durata e distanza:';
+                // Nascondi la selezione muscoli per cardio
+                if (musclesGrid) {
+                    musclesGrid.style.display = 'none';
+                }
             } else {
                 traditionalInputs.style.display = 'flex';
                 cardioInputs.style.display = 'none';
                 inputsTitle.textContent = 'Specifica serie, reps e peso:';
+                // Mostra la selezione muscoli per esercizi tradizionali
+                if (musclesGrid) {
+                    musclesGrid.style.display = 'block';
+                }
             }
         }
 
@@ -4251,13 +4305,13 @@ Rispondi SOLO con JSON valido, senza testo extra.
                         <div class="exercise-inputs">
                             ${exercise.isCardio ? `
                                 <div class="input-group">
-                                    <label class="input-label">Tempo</label>
+                                    <label class="input-label">Tempo (minuti)</label>
                                     <input type="number" class="input-field" placeholder="Minuti" value="${exercise.time}" 
                                            onchange="updateExercise(${index}, 'time', this.value)" min="1">
                                     <small class="input-hint">Minuti</small>
                                 </div>
                                 <div class="input-group">
-                                    <label class="input-label">Distanza</label>
+                                    <label class="input-label">Distanza (km)</label>
                                     <input type="number" class="input-field" placeholder="Km" value="${exercise.distance}" 
                                            onchange="updateExercise(${index}, 'distance', this.value)" min="0" step="0.1">
                                     <small class="input-hint">Km</small>
@@ -4484,7 +4538,7 @@ Rispondi SOLO con JSON valido, senza testo extra.
             const entriesMap = new Map();
 
             Object.entries(customSchede).forEach(([id, scheda]) => {
-                const isProtected = id.startsWith('giulia24_') || id.startsWith('giovanna0_');
+                const isProtected = id.startsWith('giulia24_') || id.startsWith('giovanna0_') || id.startsWith('doriano0_');
                 if (!isProtected || unlockedCodes.some(code => codeMappings[code] && codeMappings[code].includes(id))) {
                     entriesMap.set(id, scheda);
                 }
@@ -4500,13 +4554,19 @@ Rispondi SOLO con JSON valido, senza testo extra.
 
             container.innerHTML = entries.map(([id, Scheda]) => {
                 const isPersonal = id.startsWith('personal_');
-                const isProtected = id.startsWith('giulia24_') || id.startsWith('giovanna0_');
+                const isProtected = id.startsWith('giulia24_') || id.startsWith('giovanna0_') || id.startsWith('doriano0_');
                 const isUnlocked = unlockedCodes.some(code => codeMappings[code] && codeMappings[code].includes(id));
                 const showActions = !isPersonal && (!isProtected || isUnlocked);
+                
+                // Limita il nome della scheda a massimo 10 caratteri per i pulsanti
+                let displayName = Scheda.name;
+                if (displayName.length > 10) {
+                    displayName = displayName.substring(0, 10);
+                }
 
                 return `
                     <button class="template-btn" data-template="${id}">
-                        ${Scheda.name}
+                        ${displayName}
                         ${showActions ? `<button class="template-edit-btn" onclick="event.stopPropagation(); editScheda('${id}')">✏️</button>` : ''}
                         ${showActions ? `<button class="template-delete-btn" onclick="event.stopPropagation(); deleteScheda('${id}')">🗑️</button>` : ''}
                     </button>
@@ -4586,7 +4646,7 @@ Rispondi SOLO con JSON valido, senza testo extra.
             // Filtra le schede: escludi personali e schede protette non sbloccate
             const editableSchede = Object.entries(customSchede).filter(([id]) => {
                 if (id.startsWith('personal_')) return false;
-                const isProtected = id.startsWith('giulia24_') || id.startsWith('giovanna0_');
+                const isProtected = id.startsWith('giulia24_') || id.startsWith('giovanna0_') || id.startsWith('doriano0_');
                 return !isProtected;
             });
             
